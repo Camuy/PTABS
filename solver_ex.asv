@@ -1,0 +1,74 @@
+function [y, x, x_d, x_dd, Ftot] = solver_ex(w_w, amp_w, y, time, M, C, K, Fgal, Fg)
+
+load workspace.mat body wave
+
+disp("Solver started")
+
+% define the movement of the mechanism
+
+G = -w_w.^2.*M + 1i.*w_w.*C + K;
+
+% fun0 = @(x1)@(x2) [[1, 0];[0, -1]]*Fg + K*[x1; -x2] - [[1, 0];[0, 0]]*Fz(-x1) + [[0, 0];[0, 1]]*Fz(-x2);
+x = zeros(2, length(y));
+f = waitbar(0,"Solution Calculation");
+k = 0;
+
+for j = 1:4
+    for i = 1:length(y)
+        Ftot(:, i) = [interp1(Fgal.z, Fgal.normal(1, :), real(y(i)) + Fgal.x_0 - real(x(1, i))) + interp1(Fgal.zdot, Fgal.diff(1, :), real(y(i)) + Fgal.x_0 - real(x(1, i)))*y(i); interp1(Fgal.z, Fgal.normal(2, :), real(y(i)) + Fgal.x_0 - real(x(2, i))) + interp1(Fgal.zdot, Fgal.diff(2, :), real(y(i)) + Fgal.x_0 - real(x(2, i)))*y(i)];
+        x(:, i) = G\Ftot(:, i) - [1; 1].*Fgal.x_0;
+        x_12(:, i) = [1,-1]*x(:, i);
+        k = k + 1;
+        waitbar(k/(4*length(y)), f, sprintf("Solution Calculation"));
+    end
+end
+close(f);
+
+v(1, :) = diff(x(1, :) , 1);
+v(2, :) = diff(x(2, :) , 1);
+a(1, :) = diff(v(1, :) , 1);
+a(2, :) = diff(v(2, :) , 1);
+x_d = diff(x_12, 1);
+x_dd = diff(x_d, 1);
+
+disp("Inizialisation started")
+figure(3)
+
+sp(1)=subplot(211);
+plot(time, real(Ftot(1,:)), time, real(Ftot(2, :))), grid on, hold on
+title('Total forces')
+ylabel('Total Forces [N]')
+xlabel('time [s]')
+
+sp(2)=subplot(212);
+plot(time, real(x) + Fgal.x_0), grid on, hold on
+plot(time, real(x_12)), grid on, hold on
+legend('x_1', 'x_2', 'x_{1-2}')
+title('Model responce')
+ylabel('x model [m]')
+xlabel('time [s]')
+
+v(1, :) = diff(x(1, :) , 1);
+v(2, :) = diff(x(2, :) , 1);
+a(1, :) = diff(v(1, :) , 1);
+a(2, :) = diff(v(2, :) , 1);
+x_d = diff(x_12, 1);
+x_dd = diff(x_d, 1);
+
+figure(4)
+title('Velocity and Aceleration')
+sp(1) = subplot(211);
+plot(linspace(0,30, length(x_d)), real(v)), grid on, hold on
+plot(linspace(0,30, length(x_d)), real(x_d)), grid on, hold on
+legend('v_1', 'v_2', 'v_{2-1}')
+ylabel('v_{pto} [m/s]')
+xlabel('time [s]')
+
+sp(2) = subplot(212);
+plot(linspace(0,30, length(x_dd)), real(a)), grid on, hold on
+plot(linspace(0,30, length(x_dd)), real(x_dd)), grid on
+legend('a_1', 'a_2', 'a_{2-1}')
+ylabel('a_{pto} [m/s^2]')
+xlabel('time [s]')
+
+disp("Solver ended")
