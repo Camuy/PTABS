@@ -91,7 +91,7 @@ K = [[k_pto, -k_pto]; [-k_pto, k_pto]];
 
 B = [C, K; -M, zeros(2)];
 
-Fgal.b = [1.8 * 1000 * 0.785; 3000];
+Fgal.b = [1.8 * 1000 * 0.785; 5000];
 
 Fgal.g.z = [linspace(-1000, 0.001, 100), linspace(0, 1000, 100)];
 Fgal.g.d = [zeros(1, 100), ones(1, 100)];
